@@ -1,0 +1,502 @@
+import os
+from datetime import timedelta
+
+import pendulum
+
+from airflow.sdk import DAG
+from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
+
+
+# ============================================================
+# PROJECT CONFIGURATION
+# ============================================================
+
+PROJECT_ROOT = os.environ.get(
+    "OLIST_PROJECT_ROOT",
+    "/mnt/d/olist_pipeline",
+)
+
+VENV_ROOT = os.environ.get(
+    "OLIST_VENV_ROOT",
+    f"{PROJECT_ROOT}/venv",
+)
+
+PYTHON_BIN = f"{VENV_ROOT}/bin/python"
+
+
+# ============================================================
+# COMMON BASH SETUP
+# ============================================================
+
+BASE_COMMAND = f"""
+set -euo pipefail
+
+# ------------------------------------------------------------
+# Project root
+# ------------------------------------------------------------
+
+export PROJECT_ROOT="{PROJECT_ROOT}"
+export VENV_ROOT="{VENV_ROOT}"
+export PYTHON_BIN="{PYTHON_BIN}"
+
+cd "$PROJECT_ROOT"
+
+echo "========================================"
+echo "PROJECT CONFIGURATION"
+echo "========================================"
+echo "Project root : $PROJECT_ROOT"
+echo "Virtual env  : $VENV_ROOT"
+echo "Python       : $PYTHON_BIN"
+echo "========================================"
+
+
+# ------------------------------------------------------------
+# Validate virtual environment
+# ------------------------------------------------------------
+
+if [[ ! -x "$PYTHON_BIN" ]]; then
+    echo "ERROR: Python executable not found:"
+    echo "$PYTHON_BIN"
+    echo ""
+    echo "Expected virtual environment:"
+    echo "$VENV_ROOT"
+    exit 1
+fi
+
+
+# ------------------------------------------------------------
+# Configure virtual environment
+# ------------------------------------------------------------
+
+export VIRTUAL_ENV="$VENV_ROOT"
+export PATH="$VENV_ROOT/bin:$PATH"
+
+export PYTHONUNBUFFERED=1
+
+# Make Spark use the same Python environment
+export PYSPARK_PYTHON="$PYTHON_BIN"
+export PYSPARK_DRIVER_PYTHON="$PYTHON_BIN"
+
+
+# ------------------------------------------------------------
+# Load configuration
+# ------------------------------------------------------------
+
+CONFIG_FILE="$PROJECT_ROOT/config.env"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo "ERROR: config.env not found:"
+    echo "$CONFIG_FILE"
+    exit 1
+fi
+
+set -a
+source "$CONFIG_FILE"
+set +a
+
+
+# ------------------------------------------------------------
+# Validate required configuration
+# ------------------------------------------------------------
+
+if [[ -z "${{RAW_PATH:-}}" ]]; then
+    echo "ERROR: RAW_PATH missing from config.env"
+    exit 1
+fi
+
+if [[ -z "${{PROCESSED_PATH:-}}" ]]; then
+    echo "ERROR: PROCESSED_PATH missing from config.env"
+    exit 1
+fi
+
+if [[ -z "${{REPORTS_PATH:-}}" ]]; then
+    echo "ERROR: REPORTS_PATH missing from config.env"
+    exit 1
+fi
+
+if [[ -z "${{LOGS_PATH:-}}" ]]; then
+    echo "ERROR: LOGS_PATH missing from config.env"
+    exit 1
+fi
+
+
+# ------------------------------------------------------------
+# Create output directories
+# ------------------------------------------------------------
+
+mkdir -p "$PROCESSED_PATH"
+mkdir -p "$REPORTS_PATH"
+mkdir -p "$LOGS_PATH"
+
+
+# ------------------------------------------------------------
+# Environment information
+# ------------------------------------------------------------
+
+echo "Python executable:"
+"$PYTHON_BIN" --version
+
+echo "Python path:"
+"$PYTHON_BIN" -c "import sys; print(sys.executable)"
+
+echo "RAW_PATH       : $RAW_PATH"
+echo "PROCESSED_PATH : $PROCESSED_PATH"
+echo "REPORTS_PATH   : $REPORTS_PATH"
+echo "LOGS_PATH      : $LOGS_PATH"
+
+echo "========================================"
+"""
+
+
+# ============================================================
+# DEFAULT AIRFLOW SETTINGS
+# ============================================================
+
+default_args = {
+    "owner": "olist-data-engineering",
+    "retries": 2,
+    "retry_delay": timedelta(minutes=2),
+}
+
+
+# ============================================================
+# DAG
+# ============================================================
+
+with DAG(
+    dag_id="olist_pipeline",
+
+    description="End-to-end local Olist Data Engineering Pipeline",
+
+    start_date=pendulum.datetime(
+        2026,
+        8,
+        24,
+        tz="Asia/Kolkata",
+    ),
+
+    schedule=None,
+    catchup=False,
+    max_active_runs=1,
+
+    default_args=default_args,
+
+    tags=[
+        "olist",
+        "data-engineering",
+        "pyspark",
+        "sql",
+        "local",
+    ],
+) as dag:
+
+    # ========================================================
+    # 1. START
+    # ========================================================
+
+    start = EmptyOperator(
+        task_id="start",
+    )
+
+
+    # ========================================================
+    # 2. VALIDATE ENVIRONMENT + RAW DATA
+    # ========================================================
+
+    validate_raw_data = BashOperator(
+        task_id="validate_raw_data",
+
+        bash_command=f"""
+{BASE_COMMAND}
+
+echo "========================================"
+echo "VALIDATING LOCAL ENVIRONMENT"
+echo "========================================"
+
+
+# ------------------------------------------------------------
+# Python
+# ------------------------------------------------------------
+
+echo "Checking Python..."
+
+"$PYTHON_BIN" --version
+
+"$PYTHON_BIN" -c "import sys; print('Python executable:', sys.executable)"
+
+
+# ------------------------------------------------------------
+# Pandas
+# ------------------------------------------------------------
+
+echo "Checking pandas..."
+
+"$PYTHON_BIN" -c "import pandas; print('pandas:', pandas.__version__)"
+
+
+# ------------------------------------------------------------
+# PySpark
+# ------------------------------------------------------------
+
+echo "Checking PySpark..."
+
+"$PYTHON_BIN" -c "import pyspark; print('PySpark:', pyspark.__version__)"
+
+
+# ------------------------------------------------------------
+# Java
+# ------------------------------------------------------------
+
+echo "Checking Java..."
+
+if ! command -v java >/dev/null 2>&1; then
+    echo "ERROR: Java is not installed or not available in PATH."
+    exit 1
+fi
+
+java -version
+
+
+# ------------------------------------------------------------
+# Required project files
+# ------------------------------------------------------------
+
+echo "========================================"
+echo "VALIDATING PROJECT FILES"
+echo "========================================"
+
+REQUIRED_FILES=(
+    "scripts/profile_raw_data.sh"
+    "src/ingestion/profiler.py"
+    "src/transform/spark_pipeline.py"
+    "src/validation/validate_master_orders.py"
+    "src/analysis/run_sql_reports.py"
+    "scripts/archive_outputs.sh"
+)
+
+for FILE in "${{REQUIRED_FILES[@]}}"; do
+
+    if [[ ! -f "$FILE" ]]; then
+        echo "ERROR: Required file missing:"
+        echo "$PROJECT_ROOT/$FILE"
+        exit 1
+    fi
+
+    echo "Found: $FILE"
+done
+
+
+# ------------------------------------------------------------
+# Raw data
+# ------------------------------------------------------------
+
+echo "========================================"
+echo "VALIDATING RAW DATA"
+echo "========================================"
+
+if [[ ! -d "$RAW_PATH" ]]; then
+    echo "ERROR: Raw directory not found:"
+    echo "$RAW_PATH"
+    exit 1
+fi
+
+RAW_COUNT=$(find "$RAW_PATH" -maxdepth 1 -type f -name "*.csv" | wc -l)
+
+echo "Raw CSV count: $RAW_COUNT"
+
+if [[ "$RAW_COUNT" -ne 9 ]]; then
+    echo "ERROR: Expected 9 Olist CSV files."
+    echo "Found: $RAW_COUNT"
+    exit 1
+fi
+
+
+echo "========================================"
+echo "LOCAL ENVIRONMENT VALIDATION PASSED"
+echo "RAW DATA VALIDATION PASSED"
+echo "========================================"
+""",
+
+        do_xcom_push=False,
+    )
+
+
+    # ========================================================
+    # 3. DATA PROFILING
+    # ========================================================
+
+    profile_data = BashOperator(
+        task_id="profile_data",
+
+        bash_command=f"""
+{BASE_COMMAND}
+
+echo "========================================"
+echo "DATA PROFILING"
+echo "========================================"
+
+echo "Running shell profiling..."
+
+bash scripts/profile_raw_data.sh
+
+echo "Running Python profiler..."
+
+"$PYTHON_BIN" -m src.ingestion.profiler
+
+echo "Data profiling completed successfully."
+""",
+
+        execution_timeout=timedelta(minutes=20),
+        do_xcom_push=False,
+    )
+
+
+    # ========================================================
+    # 4. PYSPARK TRANSFORMATION
+    # ========================================================
+
+    spark_transform = BashOperator(
+        task_id="spark_transform",
+
+        bash_command=f"""
+{BASE_COMMAND}
+
+echo "========================================"
+echo "PYSPARK TRANSFORMATION"
+echo "========================================"
+
+echo "Python:"
+"$PYTHON_BIN" --version
+
+echo "Java:"
+java -version
+
+echo "PySpark:"
+"$PYTHON_BIN" -c "import pyspark; print(pyspark.__version__)"
+
+echo "Running PySpark transformation..."
+
+"$PYTHON_BIN" -m src.transform.spark_pipeline
+
+echo "PySpark transformation completed successfully."
+""",
+
+        execution_timeout=timedelta(minutes=30),
+        do_xcom_push=False,
+    )
+
+
+    # ========================================================
+    # 5. QUALITY CHECK
+    # ========================================================
+
+    quality_check = BashOperator(
+        task_id="quality_check",
+
+        bash_command=f"""
+{BASE_COMMAND}
+
+echo "========================================"
+echo "QUALITY CHECK"
+echo "========================================"
+
+MASTER_ORDERS="$PROCESSED_PATH/master_orders"
+
+if [[ ! -d "$MASTER_ORDERS" ]]; then
+    echo "ERROR: master_orders output not found:"
+    echo "$MASTER_ORDERS"
+    exit 1
+fi
+
+echo "master_orders found."
+
+"$PYTHON_BIN" -m src.validation.validate_master_orders
+
+echo "Quality checks completed successfully."
+""",
+
+        execution_timeout=timedelta(minutes=20),
+        do_xcom_push=False,
+    )
+
+
+    # ========================================================
+    # 6. SQL ANALYTICS / REPORTS
+    # ========================================================
+
+    generate_reports = BashOperator(
+        task_id="generate_reports",
+
+        bash_command=f"""
+{BASE_COMMAND}
+
+echo "========================================"
+echo "SPARK SQL ANALYTICS"
+echo "========================================"
+
+MASTER_ORDERS="$PROCESSED_PATH/master_orders"
+
+if [[ ! -d "$MASTER_ORDERS" ]]; then
+    echo "ERROR: master_orders missing:"
+    echo "$MASTER_ORDERS"
+    exit 1
+fi
+
+"$PYTHON_BIN" -m src.analysis.run_sql_reports
+
+echo "SQL analytics completed successfully."
+""",
+
+        execution_timeout=timedelta(minutes=30),
+        do_xcom_push=False,
+    )
+
+
+    # ========================================================
+    # 7. ARCHIVE OUTPUTS
+    # ========================================================
+
+    archive_outputs = BashOperator(
+        task_id="archive_outputs",
+
+        bash_command=f"""
+{BASE_COMMAND}
+
+echo "========================================"
+echo "ARCHIVING OUTPUTS"
+echo "========================================"
+
+bash scripts/archive_outputs.sh
+
+echo "Archive completed successfully."
+""",
+
+        execution_timeout=timedelta(minutes=10),
+        do_xcom_push=False,
+    )
+
+
+    # ========================================================
+    # 8. END
+    # ========================================================
+
+    end = EmptyOperator(
+        task_id="end",
+    )
+
+
+    # ========================================================
+    # TASK DEPENDENCIES
+    # ========================================================
+
+    (
+        start
+        >> validate_raw_data
+        >> profile_data
+        >> spark_transform
+        >> quality_check
+        >> generate_reports
+        >> archive_outputs
+        >> end
+    )

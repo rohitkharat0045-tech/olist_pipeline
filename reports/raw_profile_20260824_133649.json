@@ -1,0 +1,372 @@
+{
+    "orders": {
+        "table": "orders",
+        "rows": 99441,
+        "columns": 8,
+        "column_names": [
+            "order_id",
+            "customer_id",
+            "order_status",
+            "order_purchase_timestamp",
+            "order_approved_at",
+            "order_delivered_carrier_date",
+            "order_delivered_customer_date",
+            "order_estimated_delivery_date"
+        ],
+        "data_types": {
+            "order_id": "object",
+            "customer_id": "object",
+            "order_status": "object",
+            "order_purchase_timestamp": "object",
+            "order_approved_at": "object",
+            "order_delivered_carrier_date": "object",
+            "order_delivered_customer_date": "object",
+            "order_estimated_delivery_date": "object"
+        },
+        "null_counts": {
+            "order_id": 0,
+            "customer_id": 0,
+            "order_status": 0,
+            "order_purchase_timestamp": 0,
+            "order_approved_at": 160,
+            "order_delivered_carrier_date": 1783,
+            "order_delivered_customer_date": 2965,
+            "order_estimated_delivery_date": 0
+        },
+        "null_percentage": {
+            "order_id": 0.0,
+            "customer_id": 0.0,
+            "order_status": 0.0,
+            "order_purchase_timestamp": 0.0,
+            "order_approved_at": 0.16,
+            "order_delivered_carrier_date": 1.79,
+            "order_delivered_customer_date": 2.98,
+            "order_estimated_delivery_date": 0.0
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 52.94,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "order_items": {
+        "table": "order_items",
+        "rows": 112650,
+        "columns": 7,
+        "column_names": [
+            "order_id",
+            "order_item_id",
+            "product_id",
+            "seller_id",
+            "shipping_limit_date",
+            "price",
+            "freight_value"
+        ],
+        "data_types": {
+            "order_id": "object",
+            "order_item_id": "int64",
+            "product_id": "object",
+            "seller_id": "object",
+            "shipping_limit_date": "object",
+            "price": "float64",
+            "freight_value": "float64"
+        },
+        "null_counts": {
+            "order_id": 0,
+            "order_item_id": 0,
+            "product_id": 0,
+            "seller_id": 0,
+            "shipping_limit_date": 0,
+            "price": 0,
+            "freight_value": 0
+        },
+        "null_percentage": {
+            "order_id": 0.0,
+            "order_item_id": 0.0,
+            "product_id": 0.0,
+            "seller_id": 0.0,
+            "shipping_limit_date": 0.0,
+            "price": 0.0,
+            "freight_value": 0.0
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 35.99,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "customers": {
+        "table": "customers",
+        "rows": 99441,
+        "columns": 5,
+        "column_names": [
+            "customer_id",
+            "customer_unique_id",
+            "customer_zip_code_prefix",
+            "customer_city",
+            "customer_state"
+        ],
+        "data_types": {
+            "customer_id": "object",
+            "customer_unique_id": "object",
+            "customer_zip_code_prefix": "int64",
+            "customer_city": "object",
+            "customer_state": "object"
+        },
+        "null_counts": {
+            "customer_id": 0,
+            "customer_unique_id": 0,
+            "customer_zip_code_prefix": 0,
+            "customer_city": 0,
+            "customer_state": 0
+        },
+        "null_percentage": {
+            "customer_id": 0.0,
+            "customer_unique_id": 0.0,
+            "customer_zip_code_prefix": 0.0,
+            "customer_city": 0.0,
+            "customer_state": 0.0
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 26.59,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "products": {
+        "table": "products",
+        "rows": 32951,
+        "columns": 9,
+        "column_names": [
+            "product_id",
+            "product_category_name",
+            "product_name_lenght",
+            "product_description_lenght",
+            "product_photos_qty",
+            "product_weight_g",
+            "product_length_cm",
+            "product_height_cm",
+            "product_width_cm"
+        ],
+        "data_types": {
+            "product_id": "object",
+            "product_category_name": "object",
+            "product_name_lenght": "float64",
+            "product_description_lenght": "float64",
+            "product_photos_qty": "float64",
+            "product_weight_g": "float64",
+            "product_length_cm": "float64",
+            "product_height_cm": "float64",
+            "product_width_cm": "float64"
+        },
+        "null_counts": {
+            "product_id": 0,
+            "product_category_name": 610,
+            "product_name_lenght": 610,
+            "product_description_lenght": 610,
+            "product_photos_qty": 610,
+            "product_weight_g": 2,
+            "product_length_cm": 2,
+            "product_height_cm": 2,
+            "product_width_cm": 2
+        },
+        "null_percentage": {
+            "product_id": 0.0,
+            "product_category_name": 1.85,
+            "product_name_lenght": 1.85,
+            "product_description_lenght": 1.85,
+            "product_photos_qty": 1.85,
+            "product_weight_g": 0.01,
+            "product_length_cm": 0.01,
+            "product_height_cm": 0.01,
+            "product_width_cm": 0.01
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 6.3,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "sellers": {
+        "table": "sellers",
+        "rows": 3095,
+        "columns": 4,
+        "column_names": [
+            "seller_id",
+            "seller_zip_code_prefix",
+            "seller_city",
+            "seller_state"
+        ],
+        "data_types": {
+            "seller_id": "object",
+            "seller_zip_code_prefix": "int64",
+            "seller_city": "object",
+            "seller_state": "object"
+        },
+        "null_counts": {
+            "seller_id": 0,
+            "seller_zip_code_prefix": 0,
+            "seller_city": 0,
+            "seller_state": 0
+        },
+        "null_percentage": {
+            "seller_id": 0.0,
+            "seller_zip_code_prefix": 0.0,
+            "seller_city": 0.0,
+            "seller_state": 0.0
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 0.59,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "payments": {
+        "table": "payments",
+        "rows": 103886,
+        "columns": 5,
+        "column_names": [
+            "order_id",
+            "payment_sequential",
+            "payment_type",
+            "payment_installments",
+            "payment_value"
+        ],
+        "data_types": {
+            "order_id": "object",
+            "payment_sequential": "int64",
+            "payment_type": "object",
+            "payment_installments": "int64",
+            "payment_value": "float64"
+        },
+        "null_counts": {
+            "order_id": 0,
+            "payment_sequential": 0,
+            "payment_type": 0,
+            "payment_installments": 0,
+            "payment_value": 0
+        },
+        "null_percentage": {
+            "order_id": 0.0,
+            "payment_sequential": 0.0,
+            "payment_type": 0.0,
+            "payment_installments": 0.0,
+            "payment_value": 0.0
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 16.23,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "reviews": {
+        "table": "reviews",
+        "rows": 99224,
+        "columns": 7,
+        "column_names": [
+            "review_id",
+            "order_id",
+            "review_score",
+            "review_comment_title",
+            "review_comment_message",
+            "review_creation_date",
+            "review_answer_timestamp"
+        ],
+        "data_types": {
+            "review_id": "object",
+            "order_id": "object",
+            "review_score": "int64",
+            "review_comment_title": "object",
+            "review_comment_message": "object",
+            "review_creation_date": "object",
+            "review_answer_timestamp": "object"
+        },
+        "null_counts": {
+            "review_id": 0,
+            "order_id": 0,
+            "review_score": 0,
+            "review_comment_title": 87656,
+            "review_comment_message": 58247,
+            "review_creation_date": 0,
+            "review_answer_timestamp": 0
+        },
+        "null_percentage": {
+            "review_id": 0.0,
+            "order_id": 0.0,
+            "review_score": 0.0,
+            "review_comment_title": 88.34,
+            "review_comment_message": 58.7,
+            "review_creation_date": 0.0,
+            "review_answer_timestamp": 0.0
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 39.12,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "geolocation": {
+        "table": "geolocation",
+        "rows": 1000163,
+        "columns": 5,
+        "column_names": [
+            "geolocation_zip_code_prefix",
+            "geolocation_lat",
+            "geolocation_lng",
+            "geolocation_city",
+            "geolocation_state"
+        ],
+        "data_types": {
+            "geolocation_zip_code_prefix": "int64",
+            "geolocation_lat": "float64",
+            "geolocation_lng": "float64",
+            "geolocation_city": "object",
+            "geolocation_state": "object"
+        },
+        "null_counts": {
+            "geolocation_zip_code_prefix": 0,
+            "geolocation_lat": 0,
+            "geolocation_lng": 0,
+            "geolocation_city": 0,
+            "geolocation_state": 0
+        },
+        "null_percentage": {
+            "geolocation_zip_code_prefix": 0.0,
+            "geolocation_lat": 0.0,
+            "geolocation_lng": 0.0,
+            "geolocation_city": 0.0,
+            "geolocation_state": 0.0
+        },
+        "duplicate_rows": 261831,
+        "memory_mb": 130.26,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    },
+    "category_translation": {
+        "table": "category_translation",
+        "rows": 71,
+        "columns": 2,
+        "column_names": [
+            "product_category_name",
+            "product_category_name_english"
+        ],
+        "data_types": {
+            "product_category_name": "object",
+            "product_category_name_english": "object"
+        },
+        "null_counts": {
+            "product_category_name": 0,
+            "product_category_name_english": 0
+        },
+        "null_percentage": {
+            "product_category_name": 0.0,
+            "product_category_name_english": 0.0
+        },
+        "duplicate_rows": 0,
+        "memory_mb": 0.01,
+        "schema_valid": true,
+        "missing_columns": [],
+        "extra_columns": []
+    }
+}
